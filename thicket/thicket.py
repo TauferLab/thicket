@@ -661,19 +661,8 @@ class Thicket(GraphFrame):
             statsframe=self.statsframe.deepcopy(),
         )
 
-    def tree(self):
-        """hatchet tree() function for a thicket"""
-        temp_df = self.statsframe.dataframe.copy()
-        # Adjustments specific for multi-index.
-        if isinstance(temp_df.columns, pd.MultiIndex):
-            temp_df.columns = temp_df.columns.to_flat_index()
-            temp_df.rename(columns={("", "name"): "name"}, inplace=True)
-        # Placeholder value. TODO: Enable selection from performance data table.
-        temp_df["thicket_tree"] = -1
-        return GraphFrame.tree(
-            self=Thicket(graph=self.graph, dataframe=temp_df),
-            metric_column="thicket_tree",
-        )
+    def tree(self, *args, **kwargs):
+        return self.statsframe.tree(*args, **kwargs)
 
     def unify_pair(self, other):
         """Unify two Thicket's graphs and dataframes"""
