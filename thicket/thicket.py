@@ -13,7 +13,7 @@ from hashlib import md5
 import pandas as pd
 import numpy as np
 from hatchet import GraphFrame
-from hatchet.query import AbstractQuery
+from hatchet.query import AbstractQuery, QueryMatcher
 
 import thicket.helpers as helpers
 from .utils import verify_sorted_profile
@@ -250,7 +250,7 @@ class Thicket(GraphFrame):
         # Perform unify ensemble
         thicket_object = Thicket.unify_ensemble(ens_list)
         if intersection:
-            thicket_object.intersection()
+            thicket_object = thicket_object.intersection()
         return thicket_object
 
     @staticmethod
@@ -477,6 +477,9 @@ class Thicket(GraphFrame):
             inplace=True,
         )
 
+        # Sort DataFrame
+        combined_th.dataframe.sort_index(inplace=True)
+
         ###
         # Step 3: Join "self" & "other" metadata table
         ###
@@ -584,7 +587,10 @@ class Thicket(GraphFrame):
         # way eventually, but for now, we'll just create a new aggregated statistics
         # table the same way we do when we create a new thicket.
         new_dataframe = squashed_gf.dataframe
-        stats_df = helpers._new_statsframe_df(new_dataframe)
+        multiindex = False
+        if isinstance(self.statsframe.dataframe.columns, pd.MultiIndex):
+            multiindex = True
+        stats_df = helpers._new_statsframe_df(new_dataframe, multiindex=multiindex)
         sframe = GraphFrame(
             graph=new_graph,
             dataframe=stats_df,
@@ -852,7 +858,7 @@ class Thicket(GraphFrame):
         # Replace NaN with None in string columns
         for col in unify_df.columns:
             if pd.api.types.is_string_dtype(unify_df[col].dtype):
-                unify_df[col].replace(fill_value, None, inplace=True)
+                unify_df[col].replace({fill_value: None}, inplace=True)
 
         # Operations specific to a superthicket
         if superthicket:
@@ -1021,47 +1027,18 @@ class Thicket(GraphFrame):
         Nodes not contained in all profiles are removed.
 
         Returns:
-            remaining_node_list (list): list of nodes that were not removed
-            removed_node_list (list): list of removed nodes
+            (thicket): intersected thicket
         """
-        # Filter the performance data table
-        total_profiles = len(self.profile)
-        remaining_node_list = []  # Needed for graph
-        removed_node_list = []
 
-        # For each node
-        for node, new_df in self.dataframe.groupby(level=0):
-            # Use profile count to make decision
-            if len(new_df) < total_profiles:
-                removed_node_list.append(node)
-            else:
-                remaining_node_list.append(node)
-        self.dataframe.drop(removed_node_list, inplace=True)
+        # Row that didn't exist will contain "None" in the name column.
+        query = (
+            QueryMatcher()
+            .match(".", lambda row: row["name"].apply(lambda n: n is not None).all())
+            .rel("*")
+        )
+        intersected_th = self.query(query)
 
-        # Propagate change to aggregated statistics table
-        self.statsframe.dataframe.drop(removed_node_list, inplace=True)
-
-        # Filter the graph
-
-        # Remove roots
-        self.graph.roots = list(set(self.graph.roots).intersection(remaining_node_list))
-        for node in self.graph.traverse():
-            # Remove children and parents that DNE in the intersection
-            new_children = []
-            new_parents = []
-            for child in node.children:
-                if child in remaining_node_list:
-                    new_children.append(child)
-            for parent in node.parents:
-                if parent in remaining_node_list:
-                    new_parents.append(parent)
-            node.children = new_children
-            node.parents = new_parents
-
-        # Update hatchet nids
-        self.graph.enumerate_traverse()
-
-        return remaining_node_list, removed_node_list
+        return intersected_th
 
     def filter_metadata(self, select_function):
         """Filter thicket object based on a metadata key.
@@ -1167,28 +1144,26 @@ class Thicket(GraphFrame):
             return filtered_th.squash(update_inc_cols=update_inc_cols)
         return filtered_th
 
-    def groupby(self, groupby_function):
+    def groupby(self, by):
         """Create sub-thickets based on unique values in metadata column(s).
 
         Arguments:
-            groupby_function (groupby_function): groupby function on dataframe
+            by (mapping, function, label, pd.Grouper or list of such): Used to determine the groups for the groupby. See pandas.DataFrame.groupby() for more details.
 
         Returns:
             (list): list of (sub)thickets
         """
         if not self.metadata.empty:
             # group metadata table by unique values in a column
-            sub_metadataframes = self.metadata.groupby(groupby_function, dropna=False)
+            sub_metadataframes = self.metadata.groupby(by, dropna=False)
 
-            list_sub_thickets = []
-            unique_vals = []
+            # dictionary of sub_thickets
+            sub_thickets = {}
 
             # for all unique groups of metadata table
             for key, df in sub_metadataframes:
-                unique_vals.append(key)
-
                 # create a thicket copy
-                sub_thicket = self.copy()
+                sub_thicket = self.deepcopy()
 
                 # return unique group as the metadata table
                 sub_thicket.metadata = df
@@ -1216,16 +1191,18 @@ class Thicket(GraphFrame):
                 sub_thicket.statsframe.dataframe = helpers._new_statsframe_df(
                     sub_thicket.dataframe
                 )
-                list_sub_thickets.append(sub_thicket)
+
+                # add thicket to dictionary
+                sub_thickets[key] = sub_thicket
         else:
             raise EmptyMetadataTable(
                 "The provided Thicket object has an empty metadata table."
             )
 
-        print(len(list_sub_thickets), " thickets created...")
-        print(unique_vals)
+        print(len(sub_thickets), " thickets created...")
+        print(sub_thickets)
 
-        return list_sub_thickets
+        return sub_thickets
 
     def filter_stats(self, filter_function):
         """Filter thicket object based on a stats column.
