@@ -5,6 +5,7 @@
 
 import copy
 import os
+import sys
 import json
 import warnings
 from collections import OrderedDict
@@ -18,6 +19,7 @@ from hatchet.query import AbstractQuery, QueryMatcher
 import thicket.helpers as helpers
 from .utils import verify_sorted_profile
 from .utils import verify_thicket_structures
+from .external.console import ThicketRenderer
 
 
 class Thicket(GraphFrame):
@@ -667,7 +669,25 @@ class Thicket(GraphFrame):
             statsframe=self.statsframe.deepcopy(),
         )
 
-    def tree(self, *args, **kwargs):
+    def tree(
+        self,
+        metric_column=None,
+        annotation_column=None,
+        precision=3,
+        name_column="name",
+        expand_name=False,
+        context_column="file",
+        rank=0,
+        thread=0,
+        depth=10000,
+        highlight_name=False,
+        colormap="RdYlGn",
+        invert_colormap=False,
+        colormap_annotations=None,
+        render_header=True,
+        min_value=None,
+        max_value=None,
+    ):
         """Visualize the Thicket as a tree
 
         Arguments:
@@ -691,7 +711,47 @@ class Thicket(GraphFrame):
         Returns:
             str: String representation of the tree, ready to print
         """
-        return self.statsframe.tree(*args, **kwargs)
+        color = sys.stdout.isatty()
+        shell = None
+        if metric_column is None:
+            metric_column = self.default_metric
+
+        if color is False:
+            try:
+                import IPython
+
+                shell = IPython.get_ipython().__class__.__name__
+            except ImportError:
+                pass
+            # Test if running in a Jupyter notebook or qtconsole
+            if shell == "ZMQInteractiveShell":
+                color = True
+
+        if sys.version_info.major == 2:
+            unicode = False
+        elif sys.version_info.major == 3:
+            unicode = True
+
+        return ThicketRenderer(unicode=unicode, color=color).render(
+            self.graph.roots,
+            self.statsframe.dataframe,
+            metric_column=metric_column,
+            annotation_column=annotation_column,
+            precision=precision,
+            name_column=name_column,
+            expand_name=expand_name,
+            context_column=context_column,
+            rank=rank,
+            thread=thread,
+            depth=depth,
+            highlight_name=highlight_name,
+            colormap=colormap,
+            invert_colormap=invert_colormap,
+            colormap_annotations=colormap_annotations,
+            render_header=render_header,
+            min_value=min_value,
+            max_value=max_value,
+        )
 
     def unify_pair(self, other):
         """Unify two Thicket's graphs and dataframes"""
