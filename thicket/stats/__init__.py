@@ -3,6 +3,9 @@
 #
 # SPDX-License-Identifier: MIT
 
+# make flake8 unused names in this file.
+# flake8: noqa: F401
+
 from .maximum import maximum
 from .mean import mean
 from .median import median
