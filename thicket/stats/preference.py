@@ -4,12 +4,13 @@
 # SPDX-License-Identifier: MIT
 
 from ..utils import verify_thicket_structures
-from .stats_utils import cache_stats_op
+from .stats_utils import cache_stats_op, stats_log
 from .ttest import __ttest
 
 __statistical_tests = {"ttest": __ttest}
 
 
+@stats_log
 @cache_stats_op
 def preference(thicket, columns, comparison_func, *args, test="ttest", **kwargs):
     """Determine a preference between compilers, architecture, platform, etc.

@@ -1,0 +1,13 @@
+DEBUG:thicket.stats:About to call function maximum with 0 positional args (excluding the Thicket object) and 1 kwargs
+DEBUG:thicket.stats:About to call function maximum with 0 positional args (excluding the Thicket object) and 1 kwargs
+DEBUG:thicket.stats:About to call function minimum with 0 positional args (excluding the Thicket object) and 1 kwargs
+DEBUG:thicket.stats:About to call function minimum with 0 positional args (excluding the Thicket object) and 1 kwargs
+DEBUG:thicket.stats:About to call function median with 0 positional args (excluding the Thicket object) and 1 kwargs
+DEBUG:thicket.stats:About to call function mean with 0 positional args (excluding the Thicket object) and 1 kwargs
+DEBUG:thicket.stats:About to call function mean with 0 positional args (excluding the Thicket object) and 1 kwargs
+DEBUG:thicket.stats:About to call function variance with 0 positional args (excluding the Thicket object) and 1 kwargs
+DEBUG:thicket.stats:About to call function variance with 0 positional args (excluding the Thicket object) and 1 kwargs
+DEBUG:thicket.stats:About to call function std with 0 positional args (excluding the Thicket object) and 1 kwargs
+DEBUG:thicket.stats:About to call function std with 0 positional args (excluding the Thicket object) and 1 kwargs
+DEBUG:thicket.stats:About to call function percentiles with 0 positional args (excluding the Thicket object) and 1 kwargs
+DEBUG:thicket.stats:About to call function percentiles with 0 positional args (excluding the Thicket object) and 1 kwargs

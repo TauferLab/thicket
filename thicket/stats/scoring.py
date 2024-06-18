@@ -4,7 +4,7 @@ import numpy as np
 
 import thicket as th
 from ..utils import verify_thicket_structures
-from .stats_utils import cache_stats_op
+from .stats_utils import cache_stats_op, stats_log
 
 
 def _calc_score_delta_mean_delta_stdnorm(means_1, means_2, stds_1, stds_2, num_nodes):
@@ -157,6 +157,7 @@ def score(thicket, columns, output_column_name, scoring_function):
     return output_column_names
 
 
+@stats_log
 @cache_stats_op
 def score_delta_mean_delta_stdnorm(thicket, columns, output_column_name=None):
     r"""
@@ -191,6 +192,7 @@ def score_delta_mean_delta_stdnorm(thicket, columns, output_column_name=None):
     )
 
 
+@stats_log
 @cache_stats_op
 def score_delta_mean_delta_coefficient_of_variation(
     thicket, columns, output_column_name=None
@@ -229,6 +231,7 @@ def score_delta_mean_delta_coefficient_of_variation(
     )
 
 
+@stats_log
 @cache_stats_op
 def score_bhattacharyya(thicket, columns, output_column_name=None):
     r"""
@@ -262,6 +265,7 @@ def score_bhattacharyya(thicket, columns, output_column_name=None):
     return score(thicket, columns, output_column_name, _calc_score_bhattacharyya)
 
 
+@stats_log
 @cache_stats_op
 def score_hellinger(thicket, columns, output_column_name=None):
     r"""

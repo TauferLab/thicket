@@ -6,10 +6,11 @@
 import numpy as np
 
 from ..utils import verify_thicket_structures
-from .stats_utils import cache_stats_op
+from .stats_utils import cache_stats_op, stats_log
 
 
 @cache_stats_op
+@stats_log
 def mean(thicket, columns=None):
     """Calculate the mean for each node in the performance data table.
 
